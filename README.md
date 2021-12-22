@@ -95,3 +95,67 @@ count와 setCount를 선언한 후 useRecoilState를 함께 적용합니다.
 역시나 존재합니다.
 
 ## 상태만을 불러오는 useStateValue, 수정만을 불러오는 useSetRecoilValue
+
+useRecoilState는 상태의 값을 사용하며 재설정을 해줍니다.
+하지만 상태를 불러오기만 혹은 수정하기만 한다면
+다른 제공함수를 사용합니다.
+
+### 읽기전용 상태 - useStateValue
+
+위 코드에서 useRecoilState를 활용하여 데이터의 counterState 값을 수정과 읽기를 함께하였습니다. 만약 다른 컴포넌트에서 해당 데이터를 불러오는것만 목적이라면
+**useStateValue**를 사용합니다.
+
+```
+// 다른 컴포넌트
+import {useStateValue} from 'recoil'
+import {counterState} from './data/data.js'
+
+functon OnlyRead(){
+    const value = uesStateValue(counterState)
+    return {value}
+}
+```
+
+### 수정전용 - useSetRecoilValue
+
+상태를 읽기않고 수정만을 원한다면 **useSetRecoilValue**를 사용할 수 있습니다.
+
+```
+// setCounter.js
+import {useSetRecoilState, useRecoilValue} from 'recoil'
+import {counterState} from './data/data'
+
+function SetCounter(){
+    const count = useRecoilValue(counterState) // useRecoilValue로 수정할 데이터 지정
+    const setCount = useSetRecoilState(counterState) // 수정할 상태 설정
+    const minus = () => {setCount(count - 1)} // 수정함수
+
+    return <button onClick={minus}>마이너스</button>
+}
+
+```
+
+읽기전용과 수정 전용을 테스트해보며 의문이 들었다.
+useSetRecoilValue과 useRecoilValue은 useRecoilState를 분리한 것같은데
+그렇다면 useRecoilState를 다른 컴포넌트에서 같은 데이터를 수정할 수 있는지 의문이 들어 테스트해보았다.
+
+SecondUseState 컴포넌트를 만들어 Counter과 똑같이 구성해보았다.
+
+```
+import {useRecoilState} from 'recoil'
+import {counterState} from './data/data'
+
+function SecondStata(){
+    const [count, setCount] = useRecoilState(counterState)
+
+    const inc = () => {setCount(count + 1)}
+    return (
+        <>
+            <div>num : {count}</div>
+            <button onClick={inc}>증가 2번째</button>
+        </>
+    )
+}
+```
+
+아마 count, setCount의 state는 겉치레일뿐이고 상태에 대한 결과값은 같은 구성인거같다.
