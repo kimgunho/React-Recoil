@@ -1,9 +1,12 @@
+import Counter from "./Counter";
+import ReadCounter from "./ReadCounter";
 
 function App() {
   return (
-    <div className="App">
-      index
-    </div>
+      <div className="App">
+        <Counter />
+        <ReadCounter />
+      </div>
   );
 }
 
