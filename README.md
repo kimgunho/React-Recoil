@@ -94,16 +94,16 @@ count와 setCount를 선언한 후 useRecoilState를 함께 적용합니다.
 여기까지 진행해본후 든 의문은 상태만을 불러오는 부분이 존재하는가였는데
 역시나 존재합니다.
 
-## 상태만을 불러오는 useStateValue, 수정만을 불러오는 useSetRecoilValue
+## 상태만을 불러오는 useRecoilValue, 수정만을 불러오는 useSetRecoilValue
 
 useRecoilState는 상태의 값을 사용하며 재설정을 해줍니다.
 하지만 상태를 불러오기만 혹은 수정하기만 한다면
 다른 제공함수를 사용합니다.
 
-### 읽기전용 상태 - useStateValue
+### 읽기전용 상태 - useRecoilValue
 
 위 코드에서 useRecoilState를 활용하여 데이터의 counterState 값을 수정과 읽기를 함께하였습니다. 만약 다른 컴포넌트에서 해당 데이터를 불러오는것만 목적이라면
-**useStateValue**를 사용합니다.
+**useRecoilValue**를 사용합니다.
 
 ```
 // 다른 컴포넌트
@@ -159,3 +159,67 @@ function SecondStata(){
 ```
 
 아마 count, setCount의 state는 겉치레일뿐이고 상태에 대한 결과값은 같은 구성인거같다.
+
+## selector
+
+리코일은 초기 상태값으로 아톰을 지원한다.
+하지만 아톰의 상태를 사용하고 수정하려면 useRecoilState를 사용하여야한다. 이는 분명 좋은것이라 생각하고 아주 많이 활용될 것이라 생각하지만 셀렉터는 더욱 상태를 순수 함수화 하는 구조로 새로운 반환값을 리턴해주는 좋은 아톰과는 친구같은 존재? 로 느껴진다.
+말이 이상한거 같아 코드로 하나하나씩 보며 해석해보는게 좋을듯하다.
+
+```
+import {atom, selector, useRecoilState} from 'recoil';
+
+
+// userState라는 아톰에 first, last, age, 값을 설정했다.
+const userState = atom({
+  key: 'user',
+  default: {
+    firstName: 'kim',
+    lastName: 'gunho',
+    age: 20
+  }
+});
+
+
+const userNameSelector = selector({
+  key: 'userName',
+  get: ({get}) => { // get함수는 useNameSelector를 불러오며 자동적으로 로직의 결과를 반환한다.
+    const user = get(userState); // 위 userState의 데이터를 user 변수에 할당
+    return user.firstName +  ' ' + user.lastName; // first + last 네임을 리턴한다. 단 중간에 ' '스페이스 공간을 띄운다.
+  },
+  set: ({set}, name) => { // name은 set 순수 함수가 사용될 때 적용할 매개변수이다.
+    const names = name.split(' '); // 매개변수로 받은 네임을 ' '기준으로 배열화 시킨후 names에 할당한다.
+    set( // 수정할것이다. 무엇을?
+      userState, // 아톰 userState를
+      (prevState) => ({ // 전데이터랑 비교하여
+        ...prevState, // 전데이터를 유지하되
+        firstName: names[0], // names[0]의 값을 userState의 first값으로 할당
+        lastName: names[1] || '' // names[1]의 값을 last로 할당 이후 데이터는 '' 으로 적용
+      })
+    );
+  }
+});
+
+function User() {
+  const [userName, setUserName] = useRecoilState(userNameSelector);
+  const inputHandler = (event) => setUserName(event.target.value);
+
+  return (
+    <div>
+      Full name: {userName}
+      <br />
+      <input type="text" onInput={inputHandler} />
+    </div>
+  );
+}
+```
+
+개인적인 생각의 해석본을 올려놓았지만 친절하게 표기된지는 확실치 않는거같다. <br />
+[공부참고 사이트 - 리코일 레시피 소개](https://taegon.kim/archives/10105)
+
+## 기초 정리
+
+Recoil의 기본사항은 윗 부분으로 정리되며 이후 selector를 활용한 비동기 제어부분은
+2차로 정리하려합니다.
+
+리코일과 Next.js을 새롭게 배운 후 함께 적용한 재미있는 프로젝트를 빨리 만들어보고싶은 생각이 듭니다.
